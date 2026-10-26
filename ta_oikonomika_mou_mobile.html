@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#17324d">
+<title>Τα Οικονομικά μου</title>
+<style>
+:root{--navy:#17324d;--teal:#d9ede6;--coral:#fce1df;--blue:#ddeffa;--purple:#e8e0f4;--gold:#fff0cc;--bg:#f5f7fa}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,sans-serif;color:#243447}
+header{background:var(--navy);color:white;padding:22px 16px 20px;border-radius:0 0 22px 22px}
+h1{font-size:1.45rem;margin:0 0 6px}header p{margin:0;opacity:.88;font-size:.92rem}
+main{max-width:720px;margin:auto;padding:14px 12px 32px}
+.month{display:flex;align-items:center;gap:10px;margin:14px 2px}.month label{font-weight:700}.month input{flex:1}
+.card{background:white;border-radius:16px;margin:13px 0;overflow:hidden;box-shadow:0 3px 12px #18324d0c;border:1px solid #e2e8ef}
+.card h2{font-size:1.03rem;margin:0;padding:13px 15px;color:var(--navy)}.income h2{background:var(--teal)}.expenses h2{background:var(--coral)}.summary h2{background:var(--purple)}.savings h2{background:var(--gold)}
+.fields{padding:5px 14px 12px}.field{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid #edf0f4}.field:last-child{border-bottom:0}
+.field label{flex:1;font-size:.95rem}.field input{width:118px;max-width:42%;text-align:right;font-size:1rem;padding:10px 9px;border:1px solid #d6dee7;border-radius:10px;background:#fffdf7;color:#1d3043}
+input,button{font:inherit}input:focus{outline:2px solid #8bb7d8;border-color:transparent}
+.total{display:flex;justify-content:space-between;gap:12px;padding:12px 15px;background:#f4f7fa;font-weight:750}.total strong{font-variant-numeric:tabular-nums}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
+.tile{border-radius:13px;padding:13px;background:#f5f2fa}.tile span{display:block;font-size:.82rem;color:#5c6674;margin-bottom:6px}.tile strong{font-size:1.18rem;overflow-wrap:anywhere}
+.tile.left{background:#e5f2e2}.tile.after{background:#eaf4fb}
+.actions{display:flex;gap:9px;padding:0 12px 12px;flex-wrap:wrap}button{border:0;border-radius:11px;padding:11px 14px;font-weight:700;cursor:pointer}.primary{background:var(--navy);color:white}.secondary{background:#e7edf3;color:var(--navy)}.hint{font-size:.8rem;color:#667486;line-height:1.45;padding:0 3px}
+#toast{font-size:.85rem;color:#23633c;padding:0 14px 10px;min-height:8px}
+@media(max-width:380px){.field label{font-size:.88rem}.field input{width:104px}.tile strong{font-size:1.05rem}}
+</style></head>
+<body>
+<header><h1>💶 Τα Οικονομικά μου</h1><p>Οργάνωσε τα έξοδά σου και δες τι σου μένει κάθε μήνα.</p></header>
+<main>
+<div class="month"><label for="month">Μήνας</label><input id="month" type="month"></div>
+<section class="card income"><h2>💰 Εισοδήματα</h2><div class="fields">
+<div class="field"><label for="salary">Μισθός</label><input id="salary" class="incomeVal" type="number" min="0" step="0.01" inputmode="decimal" placeholder="€ 0,00"></div>
+<div class="field"><label for="otherIncome">Άλλα εισοδήματα</label><input id="otherIncome" class="incomeVal" type="number" min="0" step="0.01" inputmode="decimal" placeholder="€ 0,00"></div>
+</div><div class="total"><span>Σύνολο εισοδημάτων</span><strong id="incomeTotal">€0.00</strong></div></section>
+<section class="card expenses"><h2>🧾 Έξοδα</h2><div class="fields" id="expenseFields"></div><div class="total"><span>Σύνολο εξόδων</span><strong id="expenseTotal">€0.00</strong></div></section>
+<section class="card savings"><h2>🐷 Αποταμίευση</h2><div class="fields"><div class="field"><label for="saveGoal">Στόχος αποταμίευσης</label><input id="saveGoal" type="number" min="0" step="0.01" inputmode="decimal" placeholder="€ 0,00"></div></div></section>
+<section class="card summary"><h2>📊 Η εικόνα του μήνα</h2><div class="tiles">
+<div class="tile"><span>Σύνολο εισοδημάτων</span><strong id="sumIncome">€0.00</strong></div>
+<div class="tile"><span>Σύνολο εξόδων</span><strong id="sumExpenses">€0.00</strong></div>
+<div class="tile left"><span>Χρήματα που μένουν</span><strong id="remaining">€0.00</strong></div>
+<div class="tile after"><span>Μετά την αποταμίευση</span><strong id="afterSaving">€0.00</strong></div>
+</div></section>
+<div class="actions"><button class="primary" id="save">Αποθήκευση</button><button class="secondary" id="export">Εξαγωγή CSV</button><button class="secondary" id="reset">Καθαρισμός μήνα</button></div>
+<p class="hint">Τα ποσά αποθηκεύονται σε αυτή τη συσκευή/φυλλομετρητή όταν πατάς «Αποθήκευση». Η εξαγωγή CSV ανοίγει σε Excel ή Google Sheets. Για να μη χαθούν τα στοιχεία, κράτησε αντίγραφο του CSV.</p><div id="toast" role="status"></div>
+</main>
+<script>
+const categories=['Ενοίκιο','Βενζίνη','Ασφάλεια αυτοκινήτου','Τηλέφωνο / Ίντερνετ','Ρεύμα','Νερό','Σούπερ μάρκετ','Δόσεις / δάνεια','Μεταφορές','Υγεία / φάρμακα','Συνδρομές','Έξοδοι / καφέδες','Ρούχα / προσωπικά','Άλλο έξοδο'];
+const expenseFields=document.getElementById('expenseFields');
+categories.forEach((name,i)=>{const d=document.createElement('div');d.className='field';const l=document.createElement('label');l.htmlFor='e'+i;l.textContent=name;const inp=document.createElement('input');inp.id='e'+i;inp.className='expenseVal';inp.type='number';inp.min='0';inp.step='0.01';inp.inputMode='decimal';inp.placeholder='€ 0,00';d.append(l,inp);expenseFields.append(d)});
+const ids=['month','salary','otherIncome','saveGoal',...categories.map((_,i)=>'e'+i)];
+const money=n=>new Intl.NumberFormat('en-IE',{style:'currency',currency:'EUR'}).format(Number(n)||0);
+const num=id=>Math.max(0,Number(document.getElementById(id).value)||0);
+function calc(){const inc=num('salary')+num('otherIncome');const exp=categories.reduce((s,_,i)=>s+num('e'+i),0);const rem=inc-exp;document.getElementById('incomeTotal').textContent=money(inc);document.getElementById('expenseTotal').textContent=money(exp);document.getElementById('sumIncome').textContent=money(inc);document.getElementById('sumExpenses').textContent=money(exp);document.getElementById('remaining').textContent=money(rem);document.getElementById('afterSaving').textContent=money(rem-num('saveGoal'));document.getElementById('remaining').style.color=rem<0?'#b42318':'#23633c';}
+function key(){return 'budget-mobile-v1-'+(document.getElementById('month').value||'no-month')}
+function save(show=true){const data={};ids.forEach(id=>data[id]=document.getElementById(id).value);try{localStorage.setItem(key(),JSON.stringify(data));if(show)document.getElementById('toast').textContent='Τα στοιχεία αποθηκεύτηκαν σε αυτή τη συσκευή.';}catch(e){document.getElementById('toast').textContent='Δεν ήταν δυνατή η αποθήκευση στον browser.'}}
+function load(){let d={};try{d=JSON.parse(localStorage.getItem(key())||'{}')}catch(e){}ids.forEach(id=>{if(id!=='month' && d[id]!==undefined)document.getElementById(id).value=d[id]});calc()}
+document.getElementById('month').value=new Date().toISOString().slice(0,7);
+document.getElementById('month').addEventListener('change',load);
+document.addEventListener('input',e=>{if(e.target.matches('input')){calc();document.getElementById('toast').textContent='';}});
+document.getElementById('save').addEventListener('click',()=>save(true));
+document.getElementById('reset').addEventListener('click',()=>{if(confirm('Να καθαριστούν τα ποσά αυτού του μήνα;')){ids.filter(id=>id!=='month').forEach(id=>document.getElementById(id).value='');try{localStorage.removeItem(key())}catch(e){}calc();document.getElementById('toast').textContent='Τα ποσά καθαρίστηκαν.';}});
+document.getElementById('export').addEventListener('click',()=>{const rows=[['Κατηγορία','Ποσό (€)'],['Μήνας',document.getElementById('month').value],['Μισθός',num('salary')],['Άλλα εισοδήματα',num('otherIncome')],...categories.map((c,i)=>[c,num('e'+i)]),['Στόχος αποταμίευσης',num('saveGoal')],['Σύνολο εισοδημάτων',num('salary')+num('otherIncome')],['Σύνολο εξόδων',categories.reduce((s,_,i)=>s+num('e'+i),0)],['Χρήματα που μένουν',num('salary')+num('otherIncome')-categories.reduce((s,_,i)=>s+num('e'+i),0)]];const csv='\ufeff'+rows.map(r=>r.map(v=>'"'+String(v).replaceAll('"','""')+'"').join(';')).join('\r\n');const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8;'}));a.download='oikonomika-'+(document.getElementById('month').value||'minas')+'.csv';a.click();URL.revokeObjectURL(a.href);});
+load();
+</script></body></html>
